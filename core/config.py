@@ -26,6 +26,7 @@ DEBUG = env.bool('DEBUG', default=False)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 # DATABASE SETTINGS
+DB_ENGINE = env.str('DB_ENGINE', default='django.db.backends.postgresql')
 DB_NAME = env.str('DB_NAME', default='myproject')
 DB_USER = env.str('DB_USER', default='myuser')
 DB_PASSWORD = env.str('DB_PASSWORD', default='mypassword')

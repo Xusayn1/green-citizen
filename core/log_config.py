@@ -6,9 +6,9 @@ Simple, clean, and follows best practices.
 import sys
 from pathlib import Path
 
-# Build paths
+# Build paths (keep logs inside the project directory to avoid permission issues)
 BASE_DIR = Path(__file__).resolve().parent.parent
-LOGS_DIR = BASE_DIR.parent / 'logs'
+LOGS_DIR = BASE_DIR / 'logs'
 
 # Ensure logs directory exists
 LOGS_DIR.mkdir(exist_ok=True)

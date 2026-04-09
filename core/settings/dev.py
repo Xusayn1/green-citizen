@@ -13,10 +13,17 @@ SECRET_KEY = config.SECRET_KEY
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '*']
 
 # Local DB directly via psycopg2
+DATABASE_ENGINE = config.DB_ENGINE
+
+if DATABASE_ENGINE.endswith('sqlite3'):
+    db_name = config.DB_NAME or (BASE_DIR / 'db.sqlite3')
+else:
+    db_name = config.DB_NAME
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config.DB_NAME,
+        'ENGINE': DATABASE_ENGINE,
+        'NAME': db_name,
         'USER': config.DB_USER,
         'PASSWORD': config.DB_PASSWORD,
         'HOST': config.DB_HOST,

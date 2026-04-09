@@ -1,6 +1,7 @@
-from apps.users.models.users import User
 from django.contrib.auth.backends import ModelBackend
 from django.db.models import Q
+
+from apps.users.models import User
 
 
 class MultiFieldBackend(ModelBackend):

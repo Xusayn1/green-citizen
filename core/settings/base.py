@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 
 THIRD_PARTY_APPS = [
     'rest_framework',
+    'drf_spectacular',
 ]
 
 MY_APPS = [
@@ -158,7 +159,7 @@ REST_FRAMEWORK = {
     # ],
     'PAGE_SIZE': 20,
     'EXCEPTION_HANDLER': 'apps.shared.exceptions.handler.custom_exception_handler',
-    'DEFAULT_PAGINATION_CLASS': 'apps.shared.utils.custom_pagination.CustomPageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'apps.shared.utils.custom_paginations.CustomPageNumberPagination',
 }
 
 # -------------------------------------------------------------------
