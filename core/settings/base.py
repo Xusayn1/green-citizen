@@ -26,6 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt',
+
 ]
 
 THIRD_PARTY_APPS = [
@@ -38,6 +40,10 @@ MY_APPS = [
     'apps.users',
     'apps.notifications',
     'apps.integrations',
+    'apps.news',
+    'apps.events',
+    'apps.services',
+    'apps.steps',
 ]
 
 INSTALLED_APPS += THIRD_PARTY_APPS
