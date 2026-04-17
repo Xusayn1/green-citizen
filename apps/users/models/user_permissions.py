@@ -1,11 +1,8 @@
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.db import models
 
 from apps.shared.models import BaseModel
 from apps.users.models.permissions import Permission
-
-User = get_user_model()
-
 
 class UserPermission(BaseModel):
     """
@@ -14,7 +11,7 @@ class UserPermission(BaseModel):
     """
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='user_permissions_direct'
     )
@@ -25,7 +22,7 @@ class UserPermission(BaseModel):
     )
 
     granted_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

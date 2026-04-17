@@ -2,36 +2,46 @@ import html
 import logging
 import threading
 
-import telebot
-
 from apps.shared.utils.custom_current_host import get_client_ip
 from core import config
 
-# Initialize bot once
-bot = telebot.TeleBot(config.TELEGRAM_BOT_TOKEN)
+logger = logging.getLogger(__name__)
+
+try:
+    import telebot
+except ImportError:  # pragma: no cover - optional dependency
+    telebot = None
+
+
+def _get_bot():
+    if not telebot or not config.TELEGRAM_BOT_TOKEN:
+        return None
+    return telebot.TeleBot(config.TELEGRAM_BOT_TOKEN)
 
 
 def _send_telegram_message(text: str):
-    """Internal function: Sends a Telegram message (runs inside thread)."""
+    bot = _get_bot()
+    if bot is None or not config.TELEGRAM_CHANNEL_ID:
+        logger.debug("Telegram alerts are disabled")
+        return
+
     try:
         bot.send_message(
             chat_id=config.TELEGRAM_CHANNEL_ID,
             text=text,
-            parse_mode='HTML',
-            disable_web_page_preview=True
+            parse_mode="HTML",
+            disable_web_page_preview=True,
         )
-    except Exception as e:
-        logging.error(f"Failed to send alert to Telegram: {str(e)}")
+    except Exception as exc:  # pragma: no cover - network dependent
+        logger.error("Failed to send alert to Telegram: %s", exc)
 
 
 def send_alert(text: str):
-    """Starts a thread to send alert without blocking."""
     threading.Thread(target=_send_telegram_message, args=(text,), daemon=True).start()
 
 
 def alert_to_telegram(traceback_text: str, message: str = "No message provided",
-                      request=None, ip: str = None,
-                      port: str = None):
+                      request=None, ip: str = None, port: str = None):
     if not isinstance(message, str):
         message = str(message)
 
@@ -45,9 +55,9 @@ def alert_to_telegram(traceback_text: str, message: str = "No message provided",
     safe_port = html.escape(str(port)) if port else "unknown"
 
     text = (
-        "❌ <b>Exception Alert</b> ❌\n\n"
-        f"<b>✍️ Message:</b> <code>{safe_message}</code>\n\n"
-        f"<b>🔖 Traceback:</b> <code>{safe_traceback}</code>\n\n"
-        f"<b>🌐 IP Address/Port:</b> <code>{safe_ip}:{safe_port}</code>\n\n"
+        "Exception Alert\n\n"
+        f"Message: {safe_message}\n\n"
+        f"Traceback: {safe_traceback}\n\n"
+        f"IP Address/Port: {safe_ip}:{safe_port}\n"
     )
     send_alert(text)

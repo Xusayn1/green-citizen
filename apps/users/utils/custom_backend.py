@@ -1,7 +1,6 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.db.models import Q
-
-from apps.users.models import User
 
 
 class MultiFieldBackend(ModelBackend):
@@ -10,9 +9,10 @@ class MultiFieldBackend(ModelBackend):
     """
 
     def authenticate(self, request, username=None, password=None, **kwargs):
+        user_model = get_user_model()
         try:
             # Try to find user by email, username
-            user = User.objects.get(
+            user = user_model.objects.get(
                 Q(email__iexact=username) |
                 Q(username__iexact=username) |
                 Q(phone_number__iexact=username)
@@ -20,6 +20,6 @@ class MultiFieldBackend(ModelBackend):
 
             if user.check_password(password) and user.is_active:
                 return user
-        except User.DoesNotExist:
+        except user_model.DoesNotExist:
             pass
         return None

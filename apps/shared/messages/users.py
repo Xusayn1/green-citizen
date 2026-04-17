@@ -56,5 +56,24 @@ USER_MESSAGES: Dict[str, MessageTemplate] = {
             "ru": "Эти номера телефонов недействительны ({phone_numbers})",
         },
         "status_code": 400
-    }
+    },
+    "USER_REGISTERED_SUCCESSFULLY": {
+        "id": "USER_REGISTERED_SUCCESSFULLY",
+        "messages": {
+            "en": "User registered successfully",
+            "uz": "Foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi",
+            "ru": "Пользователь успешно зарегистрирован",
+        },
+        "status_code": 201
+    },
+    "INVALID_LANGUAGE_TYPE": {
+        "id": "INVALID_LANGUAGE_TYPE",
+        "messages": {
+            "en": "Invalid language type",
+            "uz": "Noto'g'ri til tipi",
+            "ru": "Неверный тип языка"
+        },
+        "status_code": 400
+    },
+
 }
