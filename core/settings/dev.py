@@ -13,17 +13,10 @@ SECRET_KEY = config.SECRET_KEY
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '*']
 
 # Local DB directly via psycopg2
-DATABASE_ENGINE = config.DB_ENGINE
-
-if DATABASE_ENGINE.endswith('sqlite3'):
-    db_name = config.DB_NAME or (BASE_DIR / 'db.sqlite3')
-else:
-    db_name = config.DB_NAME
-
 DATABASES = {
     'default': {
-        'ENGINE': DATABASE_ENGINE,
-        'NAME': db_name,
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config.DB_NAME,
         'USER': config.DB_USER,
         'PASSWORD': config.DB_PASSWORD,
         'HOST': config.DB_HOST,
@@ -35,3 +28,16 @@ DATABASES = {
 INSTALLED_APPS += [
     # 'debug_toolbar',
 ]
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
