@@ -1,11 +1,11 @@
 from datetime import timedelta
 
-from django.conf import settings
 from django.core.validators import validate_ipv46_address
 from django.db import models
 from django.utils import timezone
 
 from apps.shared.models import BaseModel, Language, DeviceType, DeviceTheme
+from apps.users.models.users import User
 
 class AppVersion(BaseModel):
     """
@@ -137,10 +137,8 @@ class Device(BaseModel):
         db_index=True
     )
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="devices",
         db_index=True
     )
@@ -348,7 +346,7 @@ class TokenBlocklist(BaseModel):
         help_text="Device this token was issued to"
     )
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.CASCADE,
         related_name='blocked_tokens',
         null=True,

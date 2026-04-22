@@ -86,7 +86,6 @@ class Endpoint(BaseModel):
             is_active=True
         ).select_related('permission').first()
         # If endpoint not found or no permission required, allow access
-
         if not endpoint or not endpoint.permission:
             return False
 

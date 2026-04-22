@@ -59,6 +59,7 @@ class EndpointPermissionMiddleware(MiddlewareMixin):
             method=request.method
         )
 
+
         if not has_access:
             # Get endpoint to show better error message
             endpoint = Endpoint.objects.filter(

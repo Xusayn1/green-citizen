@@ -1,58 +1,20 @@
-from django.contrib.auth import get_user_model
-from django.core.cache import cache
-from django.db.models import Q
-from rest_framework import status
 from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.shared.utils.custom_response import CustomResponse
-from apps.users.serializers.register import RegisterSerializer
-from apps.users.utils.verification_code import (
-    generate_verification_code,
-    send_verification_code,
+from apps.users.serializers.register import (
+    LoginSerializer,
+    MeSerializer,
+    RegisterSerializer,
+    ResendVerificationCodeSerializer,
+    SetPasswordSerializer,
+    UpdatePasswordSerializer,
+    UpdatePhoneNumberSerializer,
+    UpdateUserSerializer,
+    VerifyCodeSerializer,
+    VerifyUpdateCodeSerializer,
 )
-
-VERIFICATION_CODE_TIMEOUT = 120
-
-
-def _verification_cache_key(user_id):
-    return f"user_verification_code:{user_id}"
-
-
-def _save_verification_code(user_id, code):
-    cache.set(_verification_cache_key(user_id), code, timeout=VERIFICATION_CODE_TIMEOUT)
-
-
-def _get_verification_code(user_id):
-    return cache.get(_verification_cache_key(user_id))
-
-
-def _delete_verification_code(user_id):
-    cache.delete(_verification_cache_key(user_id))
-
-
-def _get_identifier(request):
-    return request.data.get("phone_number") or request.data.get("username")
-
-
-def _get_user(identifier):
-    user_model = get_user_model()
-    model_fields = {field.name for field in user_model._meta.get_fields()}
-
-    filters = Q()
-    has_lookup_field = False
-    if "phone_number" in model_fields:
-        filters |= Q(phone_number=identifier)
-        has_lookup_field = True
-    if "username" in model_fields:
-        filters |= Q(username=identifier)
-        has_lookup_field = True
-
-    if not has_lookup_field:
-        raise user_model.DoesNotExist
-
-    return user_model.objects.get(filters)
+from apps.users.utils.verification_code import send_verification_code
 
 
 class RegisterAPIView(APIView):
@@ -62,95 +24,220 @@ class RegisterAPIView(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
-            return CustomResponse.validation_error(
+            return CustomResponse.error(
                 request=request,
-                errors=serializer.errors,
+                errors=str(serializer.errors),
+                message_key="VALIDATION_ERROR"
             )
-
         user = serializer.save()
-        code = generate_verification_code()
 
-        _save_verification_code(user.id, code)
-        send_verification_code(user, code)
+        # send verification code to the user's phone number
+        send_verification_code.delay(user.id)
+
+        tokens = user.get_tokens()
+        data = {
+            "user": serializer.data,
+            "tokens": tokens
+        }
 
         return CustomResponse.success(
             request=request,
-            data=serializer.data,
-            message_key="USER_REGISTERED_SUCCESSFULLY",
+            data=data,
+            message_key="USER_REGISTERED_SUCCESSFULLY"
         )
 
 
 class VerifyCodeAPIView(APIView):
     permission_classes = [AllowAny]
-
+    serializer_class = VerifyCodeSerializer
     def post(self, request):
-        identifier = _get_identifier(request)
-        code = request.data.get("code")
-        user_model = get_user_model()
-
-        if not identifier or not code:
-            return Response(
-                {"error": "phone_number or username and code are required"},
-                status=status.HTTP_400_BAD_REQUEST,
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return CustomResponse.error(
+                request=request,
+                errors=str(serializer.errors),
+                message_key="VALIDATION_ERROR"
             )
+        user = serializer.save()
 
-        try:
-            user = _get_user(identifier)
-        except user_model.DoesNotExist:
-            return Response(
-                {"error": "User not found"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        tokens = user.get_tokens()
+        data = {
+            "user": serializer.data,
+            "tokens": tokens
+        }
 
-        saved_code = _get_verification_code(user.id)
-        if saved_code is None:
-            return Response(
-                {"error": "Verification code expired or not found"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if str(saved_code) != str(code):
-            return Response(
-                {"error": "Verification code is invalid"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        user.is_active = True
-        user.save(update_fields=["is_active"])
-        _delete_verification_code(user.id)
-
-        return Response(
-            {"message": "User verified successfully"},
-            status=status.HTTP_200_OK,
+        return CustomResponse.success(
+            request=request,
+            data=data,
+            message_key="CODE_VERIFIED_SUCCESSFULLY"
         )
 
 
 class ResendVerificationCodeAPIView(APIView):
     permission_classes = [AllowAny]
-
+    serializer_class = ResendVerificationCodeSerializer
     def post(self, request):
-        identifier = _get_identifier(request)
-        user_model = get_user_model()
-
-        if not identifier:
-            return Response(
-                {"error": "phone_number or username is required"},
-                status=status.HTTP_400_BAD_REQUEST,
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return CustomResponse.error(
+                request=request,
+                errors=str(serializer.errors),
+                message_key="VALIDATION_ERROR"
             )
+        user = serializer.save()
 
-        try:
-            user = _get_user(identifier)
-        except user_model.DoesNotExist:
-            return Response(
-                {"error": "User not found"},
-                status=status.HTTP_404_NOT_FOUND,
+class LoginAPIView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = LoginSerializer
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return CustomResponse.error(
+                request=request,
+                errors=str(serializer.errors),
+                message_key="VALIDATION_ERROR"
             )
+        user = serializer.save()
 
-        code = generate_verification_code()
-        _save_verification_code(user.id, code)
-        send_verification_code(user, code)
+        tokens = user.get_tokens()
+        data = {
+            "user": serializer.data,
+            "tokens": tokens
+        }
 
-        return Response(
-            {"message": "A new verification code has been sent"},
-            status=status.HTTP_200_OK,
+        return CustomResponse.success(
+            request=request,
+            data=data,
+            message_key="LOGIN_SUCCESSFULLY"
         )
+
+
+class UpdatePasswordAPIView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = UpdatePasswordSerializer
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={"request": request})
+        if not serializer.is_valid():
+            return CustomResponse.error(
+                request=request,
+                errors=str(serializer.errors),
+                message_key="VALIDATION_ERROR"
+            )
+        user = serializer.save()
+
+        tokens = user.get_tokens()
+        data = {
+            "user": serializer.data,
+            "tokens": tokens
+        }
+
+        return CustomResponse.success(
+            request=request,
+            data=data,
+            message_key="PASSWORD_UPDATED_SUCCESSFULLY"
+        )
+
+
+class UpdatePhoneNumberAPIView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = UpdatePhoneNumberSerializer
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={"request": request})
+        if not serializer.is_valid():
+            return CustomResponse.error(
+                request=request,
+                errors=str(serializer.errors),
+                message_key="VALIDATION_ERROR"
+            )
+        user = serializer.save()
+        send_verification_code.delay(user.id)
+        data = {"user": serializer.data}
+
+        return CustomResponse.success(
+            request=request,
+            data=data,
+            message_key="PHONE_NUMBER_UPDATED_SUCCESSFULLY"
+        )
+
+
+class VerifyUpdateCodeAPIView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = VerifyUpdateCodeSerializer
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={"request": request})
+        if not serializer.is_valid():
+            return CustomResponse.error(
+                request=request,
+                errors=str(serializer.errors),
+                message_key="VALIDATION_ERROR"
+            )
+        user = serializer.save()
+
+        tokens = user.get_tokens()
+        data = {
+            "user": serializer.data,
+            "tokens": tokens
+        }   
+
+        return CustomResponse.success(
+            request=request,
+            data=data,
+            message_key="UPDATE_CODE_VERIFIED_SUCCESSFULLY"
+        )
+
+
+class UpdateUserAPIView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = UpdateUserSerializer
+    def patch(self, request):
+        serializer = self.serializer_class(data=request.data, partial=True, context={"request": request})
+        if not serializer.is_valid():
+            return CustomResponse.error(
+                request=request,
+                errors=str(serializer.errors),
+                message_key="VALIDATION_ERROR"
+            )
+        user = serializer.save()
+        data = self.serializer_class(user).data
+        return CustomResponse.success(
+            request=request,
+            data=data,
+            message_key="USER_UPDATED_SUCCESSFULLY"
+        )
+
+
+class SetPasswordAPIView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = SetPasswordSerializer
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return CustomResponse.error(
+                request=request,
+                errors=str(serializer.errors),
+                message_key="VALIDATION_ERROR"
+            )
+        user = serializer.save()
+        tokens = user.get_tokens()
+        data = {
+            "user": serializer.data,
+            "tokens": tokens
+        }
+        return CustomResponse.success(
+            request=request,
+            data=data,
+            message_key="PASSWORD_SET_SUCCESSFULLY"
+        )
+
+class MeAPIView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = MeSerializer
+    def get(self, request):
+        user = request.user
+        serializer = self.serializer_class(user)
+        return CustomResponse.success(
+            request=request,
+            data=serializer.data,
+            message_key="USER_DETAILS_SUCCESSFULLY"
+        ) 
+
