@@ -22,6 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # -------------------------------------------------------------------
 
 INSTALLED_APPS = [
+    'modeltranslation',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,6 +45,9 @@ MY_APPS = [
     'apps.users',
     'apps.notifications',
     'apps.integrations',
+    'apps.news',
+    'apps.events',
+    'apps.services',
 ]
 
 INSTALLED_APPS += THIRD_PARTY_APPS
@@ -56,12 +60,13 @@ INSTALLED_APPS += MY_APPS
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.shared.middlewares.permission.EndpointPermissionMiddleware',
+    'apps.shared.middleware.permissions.EndpointPermissionMiddleware',
 
     # "corsheaders.middleware.CorsMiddleware",
 ]
@@ -116,6 +121,11 @@ LANGUAGES = (
     ('uz', 'Uzbek'),
 )
 
+MODELTRANSLATION_LANGUAGES = tuple(code for code, _ in LANGUAGES)
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'en'
+MODELTRANSLATION_FALLBACK_LANGUAGES = ('en', 'ru', 'uz')
+MODELTRANSLATION_AUTO_POPULATE = 'all'
+
 LOCALE_PATHS = (BASE_DIR / 'locale',)
 
 TIME_ZONE = 'Asia/Tashkent'
@@ -165,7 +175,7 @@ REST_FRAMEWORK = {
     # ],
     'PAGE_SIZE': 20,
     'EXCEPTION_HANDLER': 'apps.shared.exceptions.handler.custom_exception_handler',
-    'DEFAULT_PAGINATION_CLASS': 'apps.shared.utils.custom_pagination.CustomPageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'apps.shared.utils.custom_paginations.CustomPageNumberPagination',
 }
 
 # -------------------------------------------------------------------

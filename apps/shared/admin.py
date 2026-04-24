@@ -1,5 +1,6 @@
 
 from django.contrib import admin
+from modeltranslation.admin import TranslationAdmin
 
 from apps.shared.models import Media, Onboarding, FAQ
 
@@ -21,7 +22,7 @@ class OnboardingAdmin(admin.ModelAdmin):
 
 
 @admin.register(FAQ)
-class FAQAdmin(admin.ModelAdmin):
+class FAQAdmin(TranslationAdmin):
     list_display = ('question', 'is_active')
     list_filter = ('is_active',)
     search_fields = ('question', 'answer')
