@@ -1,11 +1,10 @@
-from django.urls import path
+from django.urls import path, include
 
-from apps.users.views.register import RegisterAPIView
-from apps.users.views.users import AllUsersListAPIView
-
-app_name = 'users'
+app_name = 'v1'
 
 urlpatterns = [
-    path('register/', RegisterAPIView.as_view(), name='register'),
-    path('users/', AllUsersListAPIView.as_view(), name='users-list'),
+   path('users/', include('apps.users.urls.v1', namespace='users')),
+    path('news/', include('apps.news.urls.v1', namespace='news')),
+    path('services/', include('apps.services.urls.v1', namespace='services')),
+    path('shared/', include('apps.shared.urls.v1', namespace='shared')),
 ]

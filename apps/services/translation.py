@@ -1,13 +1,8 @@
-from modeltranslation.translator import TranslationOptions, register
+from modeltranslation.translator import register, TranslationOptions
 
-from apps.services.models import Service, ServiceType
+from apps.services.models import ServiceType
 
 
 @register(ServiceType)
 class ServiceTypeTranslationOptions(TranslationOptions):
-    fields = ("name",)
-
-
-@register(Service)
-class ServiceTranslationOptions(TranslationOptions):
-    fields = ("name",)
+    fields = ('title',)

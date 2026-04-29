@@ -46,7 +46,6 @@ MY_APPS = [
     'apps.notifications',
     'apps.integrations',
     'apps.news',
-    'apps.events',
     'apps.services',
 ]
 
@@ -66,7 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.shared.middleware.permissions.EndpointPermissionMiddleware',
+    'apps.shared.middlewares.permission.EndpointPermissionMiddleware',
 
     # "corsheaders.middleware.CorsMiddleware",
 ]
@@ -114,17 +113,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # INTERNATIONALIZATION
 # -------------------------------------------------------------------
 
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'en'
 LANGUAGE_CODE = 'en'
 LANGUAGES = (
     ('en', 'English'),
     ('ru', 'Russian'),
     ('uz', 'Uzbek'),
 )
-
-MODELTRANSLATION_LANGUAGES = tuple(code for code, _ in LANGUAGES)
-MODELTRANSLATION_DEFAULT_LANGUAGE = 'en'
-MODELTRANSLATION_FALLBACK_LANGUAGES = ('en', 'ru', 'uz')
-MODELTRANSLATION_AUTO_POPULATE = 'all'
 
 LOCALE_PATHS = (BASE_DIR / 'locale',)
 
@@ -175,7 +170,7 @@ REST_FRAMEWORK = {
     # ],
     'PAGE_SIZE': 20,
     'EXCEPTION_HANDLER': 'apps.shared.exceptions.handler.custom_exception_handler',
-    'DEFAULT_PAGINATION_CLASS': 'apps.shared.utils.custom_paginations.CustomPageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'apps.shared.utils.custom_pagination.CustomPageNumberPagination',
 }
 
 # -------------------------------------------------------------------
@@ -214,3 +209,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute='*/1'),
     }
 }
+
+# -------------------------------------------------------------------
+# LANGUAGES CONFIG
+# -------------------------------------------------------------------

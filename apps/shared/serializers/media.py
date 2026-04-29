@@ -65,3 +65,27 @@ class MediaDetailSerializer(serializers.ModelSerializer):
         elif obj.file:
             return obj.file.url
         return None
+
+
+class MediaSmallDetailSerializer(serializers.ModelSerializer):
+    """
+    Read-only serializer for Media model.
+    Use this to nest media data inside other serializers.
+    """
+    file = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Media
+        fields = [
+            'id',
+            'file'
+        ]
+        read_only_fields = fields
+
+    def get_file(self, obj):
+        request = self.context.get('request')
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        elif obj.file:
+            return obj.file.url
+        return None
